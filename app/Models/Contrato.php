@@ -26,6 +26,8 @@ class Contrato extends Model
 {
     protected $table = 'contratos';
 
+    public static $snakeAttributes = false;
+
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cliente_id');

@@ -45,8 +45,8 @@ O monorepo `elisal-sistema/` com `backend/` + `frontend/` e o `backlog_elisal.md
   para bater certo com o PRD e a defesa. Ex.: `estado`, `taxa_adesao`, `distrito_id`.
 - **Nomes de código** (classes, métodos, variáveis internas) em **inglês**, padrão Laravel/React.
 - Regras de negócio e cálculos **nunca no Controller** — vivem em `app/Services/`.
-- Efeitos assíncronos (geração de parcelas, agendamentos) são `Jobs` (`ShouldQueue`), nunca lógica
-  síncrona dentro do endpoint de aprovação.
+- Geração de parcelas e agendamentos é chamada **síncrona** (serviços `GerarParcelasService` /
+  `GerarAgendamentoService`) dentro do endpoint de aprovação — decisão do autor (não usar filas/Jobs).
 - Toda rota sensível tem middleware de `role` no backend — nunca confiar no frontend para esconder UI.
 - Toda rota de API com cálculo financeiro ou geração automática de dados precisa de teste antes de concluída.
 - Respostas de erro da API em português, claras para o utilizador final.
@@ -75,15 +75,23 @@ ValorTotal  = TaxaAdesao + (ValorMensal × DuracaoMeses)
 ```
 
 ### Aprovar contrato (`PATCH /contratos/{id}/aprovar`)
-1. `Job GerarParcelasContrato` → cria N parcelas mensais (N = duração em meses), vencimento dia 1 ou 5.
-2. `Job GerarAgendamentoContrato` → calcula todas as datas de recolha pelos dias da semana escolhidos e
-   insere em `agendamentos_recolha`.
+1. `GerarParcelasService` (síncrono, em transação) → cria N parcelas mensais (N = duração em meses),
+   vencimento dia 5.
+2. `GerarAgendamentoService` (síncrono) → calcula todas as datas de recolha pelos dias da semana
+   escolhidos e insere em `agendamentos_recolha`.
 
 ### Validação de abertura de contrato
 Os dias da semana escolhidos têm de estar contidos em `disponibilidade_distrito` do distrito seleccionado.
 
+### Liquidar parcela (`PATCH /administracao/parcelas/{parcela}/liquidar`)
+Só admin. `ParcelaLiquidacaoService` (em transação): valida `estado = pendente`, grava `estado = pago`,
+`data_pagamento`, `numero_recibo` (se não enviado, gerado `REC-{contrato:pad4}-{parcela}`) e
+`registado_por_id` do admin.
+
 ### Atribuição de motorista
 Feita pelo Administrador, por zona/distrito, sobre agendamentos já gerados (não na abertura do contrato).
+`AtribuirMotoristaService` + `PATCH /administracao/agendamentos/{agendamento}/motorista` (só recolhas
+`pendente`; `motorista_id` nullable = sem motorista).
 
 ## Estado actual do projecto
 
@@ -95,7 +103,7 @@ Feita pelo Administrador, por zona/distrito, sobre agendamentos já gerados (nã
 - [ ] Fase 3 — Módulo admin (dados de referência)
 - [ ] Fase 4 — Módulo cliente (contratos)
 - [ ] Fase 5 — Aprovação, parcelas e agendamento automático
-- [ ] Fase 6 — Faturação e liquidação
+- [~] Fase 6 — Faturação e liquidação: `ParcelaLiquidacaoService` + `PATCH /administracao/parcelas/{parcela}/liquidar` (transação, `numero_recibo` auto ou manual, `registado_por_id`); recibo PDF `GET /administracao/parcelas/{parcela}/recibo` via `barryvdh/laravel-dompdf` (Blade `recibos.parcela`); botão Liquidar com modal de confirmação e download do Recibo no detalhe do contrato (admin)
 - [ ] Fase 7 — Módulo motorista
 - [ ] Fase 8 — Mapa e acompanhamento
 - [ ] Fase 9 — Polimento e entrega da tese

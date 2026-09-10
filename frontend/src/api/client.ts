@@ -7,7 +7,7 @@ export const USER_KEY = 'elisal_user'
 export const api = axios.create({
   baseURL: '/api',
   headers: {
-    Accept: 'application/ json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
   },
 })

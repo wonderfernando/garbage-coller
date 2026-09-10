@@ -4,12 +4,14 @@ use App\Http\Controllers\Api\AdminMotoristaController;
 use App\Http\Controllers\Api\AdminTipoResiduoController;
 use App\Http\Controllers\Api\AdminUserController;
 use App\Http\Controllers\Api\AdminVeiculoController;
+use App\Http\Controllers\Api\AgendamentoAdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContratoAdminController;
 use App\Http\Controllers\Api\ContratoClienteController;
 use App\Http\Controllers\Api\DashboardAdminController;
 use App\Http\Controllers\Api\DisponibilidadeDistritoController;
 use App\Http\Controllers\Api\GeografiaController;
+use App\Http\Controllers\Api\ParcelaAdminController;
 use App\Http\Controllers\Api\ReferenciaPublicaController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +30,8 @@ Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::post('/contratos', [ContratoClienteController::class, 'store']);
     Route::get('/contratos', [ContratoClienteController::class, 'index']);
     Route::get('/contratos/{contrato}', [ContratoClienteController::class, 'show']);
+    Route::get('/meus/parcelas', [ContratoClienteController::class, 'parcelas']);
+    Route::get('/meus/agendamentos', [ContratoClienteController::class, 'agendamentos']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
@@ -43,8 +47,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::post('/administracao/clientes/{cliente}/desbloquear', [AdminUserController::class, 'desbloquear']);
 
     Route::get('/administracao/contratos', [ContratoAdminController::class, 'index']);
+    Route::get('/administracao/contratos/{contrato}', [ContratoAdminController::class, 'show']);
     Route::patch('/contratos/{contrato}/aprovar', [ContratoAdminController::class, 'aprovar']);
     Route::patch('/contratos/{contrato}/rejeitar', [ContratoAdminController::class, 'rejeitar']);
+
+    Route::patch('/administracao/parcelas/{parcela}/liquidar', [ParcelaAdminController::class, 'liquidar']);
+    Route::get('/administracao/parcelas/{parcela}/recibo', [ParcelaAdminController::class, 'recibo']);
+    Route::patch('/administracao/agendamentos/{agendamento}/motorista', [AgendamentoAdminController::class, 'atribuirMotorista']);
 
     Route::get('/administracao/motoristas', [AdminMotoristaController::class, 'index']);
 

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { useAuth } from '../context/AuthContext'
 import { readApiError } from '../api/client'
+import { roleHomePath } from '../components/RoleGuard'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Informe o email.').email('Email inválido.'),
@@ -24,7 +25,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, user } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -43,14 +44,17 @@ export default function LoginPage() {
     setError(null)
     try {
       await login(values.email, values.password)
-      navigate('/', { replace: true })
     } catch (err) {
-      console.log('Login error:', err)
       setError(readApiError(err))
-    } finally {
       setSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      navigate(roleHomePath(user.role), { replace: true })
+    }
+  }, [user, navigate])
 
   return (
     <Box
@@ -122,6 +126,17 @@ export default function LoginPage() {
             >
               Entrar
             </Button>
+          </Stack>
+
+          <Stack sx={{ mt: 3, alignItems: 'center', flexDirection: 'row', gap: 0.5, justifyContent: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              Ainda não tem conta?
+            </Typography>
+            <Link to="/registar" style={{ textDecoration: 'none' }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0b4a2e' }}>
+                Criar conta
+              </Typography>
+            </Link>
           </Stack>
         </Box>
       </Paper>

@@ -34,7 +34,7 @@ class AberturaContratoTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('estado', 'pendente')
-            ->assertJsonCount(2, 'dias_semana')
+            ->assertJsonCount(2, 'diasSemana')
             ->assertJsonPath('frequencia_semanal', 2);
 
         $this->assertDatabaseHas('contratos', [

@@ -20,6 +20,18 @@ class ContratoAdminController extends Controller
         return response()->json($contratos);
     }
 
+    public function show(Contrato $contrato): JsonResponse
+    {
+        return response()->json($contrato->load(
+            'cliente',
+            'distrito.municipio.provincia',
+            'tipoResiduo',
+            'diasSemana',
+            'parcelas.registadoPor',
+            'agendamentos.motorista.utilizador',
+        ));
+    }
+
     public function aprovar(Contrato $contrato): JsonResponse
     {
         $this->aprovacao->aprovar($contrato);

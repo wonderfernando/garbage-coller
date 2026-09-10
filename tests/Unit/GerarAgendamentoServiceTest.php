@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Jobs\GerarAgendamentoContrato;
 use App\Models\Contrato;
 use App\Models\ContratoDiaSemana;
 use App\Models\Distrito;
@@ -10,11 +9,12 @@ use App\Models\Municipio;
 use App\Models\Provincia;
 use App\Models\TipoResiduo;
 use App\Models\User;
+use App\Services\GerarAgendamentoService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class GerarAgendamentoContratoTest extends TestCase
+class GerarAgendamentoServiceTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -36,7 +36,7 @@ class GerarAgendamentoContratoTest extends TestCase
     {
         $contrato = $this->makeContrato(duracaoMeses: 1, dias: [1]);
 
-        (new GerarAgendamentoContrato($contrato))->handle();
+        app(GerarAgendamentoService::class)->gerar($contrato);
 
         $this->assertDatabaseCount('agendamentos_recolha', 4);
 
@@ -54,7 +54,7 @@ class GerarAgendamentoContratoTest extends TestCase
     {
         $contrato = $this->makeContrato(duracaoMeses: 2, dias: []);
 
-        (new GerarAgendamentoContrato($contrato))->handle();
+        app(GerarAgendamentoService::class)->gerar($contrato);
 
         $this->assertDatabaseCount('agendamentos_recolha', 0);
     }

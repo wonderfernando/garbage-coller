@@ -21,6 +21,16 @@ export interface LoginResponse {
   user: User
 }
 
+export interface RegistoInput {
+  nome: string
+  email: string
+  password: string
+  telefone: string
+  tipo_cliente: 'particular' | 'empresa'
+  nif?: string
+  endereco_principal?: string
+}
+
 export interface Provincia {
   id: number
   nome: string
@@ -86,6 +96,17 @@ export interface Contrato {
   distrito?: Distrito
   tipoResiduo?: TipoResiduo
   diasSemana?: ContratoDiaSemana[]
+  parcelas?: ParcelaMensalidade[]
+  agendamentos?: AgendamentoRecolha[]
+}
+
+export interface CriarContratoInput {
+  distrito_id: number
+  tipo_residuo_id: number
+  dias_semana: number[]
+  duracao_meses: number
+  rua?: string
+  ponto_referencia?: string
 }
 
 export interface Motorista {
@@ -111,6 +132,8 @@ export interface ParcelaMensalidade {
   estado: 'pendente' | 'pago'
   data_pagamento?: string | null
   numero_recibo?: string | null
+  contrato?: Contrato | null
+  registadoPor?: User | null
 }
 
 export interface AgendamentoRecolha {

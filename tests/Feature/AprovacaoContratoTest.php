@@ -2,8 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\GerarAgendamentoContrato;
-use App\Jobs\GerarParcelasContrato;
 use App\Models\Contrato;
 use App\Models\ContratoDiaSemana;
 use App\Models\DisponibilidadeDistrito;
@@ -13,17 +11,14 @@ use App\Models\Provincia;
 use App\Models\TipoResiduo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class AprovacaoContratoTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_aprova_contrato_pendente_e_despacha_jobs(): void
+    public function test_admin_aprova_contrato_pendente_e_gera_parcelas_e_agendamentos(): void
     {
-        Queue::fake();
-
         $admin = $this->admin();
         $contrato = $this->makeContrato('pendente', dias: [1]);
 
@@ -38,17 +33,20 @@ class AprovacaoContratoTest extends TestCase
             'estado' => 'aprovado',
         ]);
 
-        Queue::assertPushed(GerarParcelasContrato::class);
-        Queue::assertPushed(GerarAgendamentoContrato::class);
+        $this->assertDatabaseCount('parcelas_mensalidades', 10);
 
-        $this->assertDatabaseCount('parcelas_mensalidades', 0);
-        $this->assertDatabaseCount('agendamentos_recolha', 0);
+        $this->assertDatabaseHas('parcelas_mensalidades', [
+            'contrato_id' => $contrato->id,
+            'numero_parcela' => 1,
+            'estado' => 'pendente',
+        ]);
+
+        $this->assertGreaterThan(0, $contrato->agendamentos()->count());
+        $this->assertSame('pendente', $contrato->agendamentos()->first()->estado);
     }
 
     public function test_admin_rejeita_contrato_pendente_sem_gerar_parcelas_ou_agendamentos(): void
     {
-        Queue::fake();
-
         $admin = $this->admin();
         $contrato = $this->makeContrato('pendente', dias: [1]);
 
@@ -63,7 +61,6 @@ class AprovacaoContratoTest extends TestCase
             'estado' => 'rejeitado',
         ]);
 
-        Queue::assertNothingPushed();
         $this->assertDatabaseCount('parcelas_mensalidades', 0);
         $this->assertDatabaseCount('agendamentos_recolha', 0);
     }

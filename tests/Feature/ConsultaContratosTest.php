@@ -34,7 +34,7 @@ class ConsultaContratosTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1)
             ->assertJsonPath('0.id', $meuContrato->id)
-            ->assertJsonCount(1, '0.dias_semana');
+            ->assertJsonCount(1, '0.diasSemana');
     }
 
     public function test_cliente_consulta_detalhe_de_contrato_proprio(): void
@@ -51,8 +51,8 @@ class ConsultaContratosTest extends TestCase
             ->getJson("/api/contratos/{$contrato->id}")
             ->assertOk()
             ->assertJsonPath('id', $contrato->id)
-            ->assertJsonCount(2, 'dias_semana')
-            ->assertJsonPath('tipo_residuo.nome', 'Resíduos Domésticos');
+            ->assertJsonCount(2, 'diasSemana')
+            ->assertJsonPath('tipoResiduo.nome', 'Resíduos Domésticos');
     }
 
     public function test_contrato_de_outro_cliente_devolve_404(): void

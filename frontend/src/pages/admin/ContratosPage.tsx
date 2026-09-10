@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Alert,
   Box,
@@ -34,6 +35,7 @@ const ESTADO_COLOR: Record<EstadoContrato, 'default' | 'success' | 'error' | 'wa
 }
 
 export default function ContratosPage() {
+  const navigate = useNavigate()
   const [contratos, setContratos] = useState<Contrato[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -108,7 +110,12 @@ export default function ContratosPage() {
               </TableHead>
               <TableBody>
                 {contratos.map((c) => (
-                  <TableRow key={c.id} hover>
+                  <TableRow
+                    key={c.id}
+                    hover
+                    onClick={() => navigate(`/contratos/${c.id}`)}
+                    sx={{ cursor: 'pointer' }}
+                  >
                     <TableCell>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>
                         {c.cliente?.nome ?? '—'}

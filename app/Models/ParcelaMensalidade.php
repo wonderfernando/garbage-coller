@@ -13,13 +13,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'data_vencimento',
     'estado',
     'data_pagamento',
-    'data_due',
-    'registado_por_id',
     'numero_recibo',
+    'registado_por_id',
+    'observacao',
 ])]
 class ParcelaMensalidade extends Model
 {
     protected $table = 'parcelas_mensalidades';
+
+    public static $snakeAttributes = false;
 
     public function contrato(): BelongsTo
     {

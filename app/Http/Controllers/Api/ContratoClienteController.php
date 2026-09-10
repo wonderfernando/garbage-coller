@@ -45,9 +45,19 @@ class ContratoClienteController extends Controller
     {
         $contratoModel = Contrato::where('id', $contrato)
             ->where('cliente_id', $request->user()->id)
-            ->with('diasSemana', 'distrito', 'tipoResiduo')
+            ->with('diasSemana', 'distrito', 'tipoResiduo', 'parcelas', 'agendamentos')
             ->firstOrFail();
 
         return response()->json($contratoModel);
+    }
+
+    public function parcelas(Request $request): JsonResponse
+    {
+        return response()->json($this->contratos->parcelasDoCliente($request->user()));
+    }
+
+    public function agendamentos(Request $request): JsonResponse
+    {
+        return response()->json($this->contratos->agendamentosDoCliente($request->user()));
     }
 }

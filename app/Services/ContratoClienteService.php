@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Models\AgendamentoRecolha;
 use App\Models\Contrato;
 use App\Models\ContratoDiaSemana;
 use App\Models\DisponibilidadeDistrito;
 use App\Models\Distrito;
+use App\Models\ParcelaMensalidade;
 use App\Models\TipoResiduo;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -75,5 +78,23 @@ class ContratoClienteService
         }
 
         return $diasSemana;
+    }
+
+    public function parcelasDoCliente(User $cliente): Collection
+    {
+        return ParcelaMensalidade::query()
+            ->whereHas('contrato', fn ($q) => $q->where('cliente_id', $cliente->id))
+            ->with('contrato.tipoResiduo', 'contrato.distrito')
+            ->orderByDesc('data_vencimento')
+            ->get();
+    }
+
+    public function agendamentosDoCliente(User $cliente): Collection
+    {
+        return AgendamentoRecolha::query()
+            ->whereHas('contrato', fn ($q) => $q->where('cliente_id', $cliente->id))
+            ->with('contrato.tipoResiduo', 'contrato.distrito')
+            ->orderBy('data_recolha')
+            ->get();
     }
 }

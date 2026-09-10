@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\DisponibilidadeDistrito;
 use App\Models\Distrito;
+use App\Models\Motorista;
 use App\Models\Municipio;
 use App\Models\Provincia;
 use App\Models\User;
@@ -50,11 +52,32 @@ class DatabaseSeeder extends Seeder
             ]);
 
             foreach ($distritos as $distritoNome) {
-                Distrito::query()->firstOrCreate([
+                $distrito = Distrito::query()->firstOrCreate([
                     'municipio_id' => $municipio->id,
                     'nome' => $distritoNome,
                 ]);
+
+                $this->seedDisponibilidade($distrito->id);
             }
+        }
+    }
+
+    protected function seedDisponibilidade(int $distritoId): void
+    {
+        $padroes = [
+            [1, 3, 5],
+            [2, 4, 6],
+            [1, 2, 3],
+            [4, 5, 6],
+        ];
+
+        $dias = $padroes[$distritoId % count($padroes)];
+
+        foreach ($dias as $dia) {
+            DisponibilidadeDistrito::query()->firstOrCreate([
+                'distrito_id' => $distritoId,
+                'dia_semana' => $dia,
+            ]);
         }
     }
 
@@ -65,6 +88,7 @@ class DatabaseSeeder extends Seeder
             [
                 'nome' => 'Test User',
                 'password' => bcrypt('password'),
+                'telefone' => '+244 900 000 000',
             ]
         );
 
@@ -74,8 +98,28 @@ class DatabaseSeeder extends Seeder
                 'nome' => 'Administrador',
                 'password' => bcrypt('password'),
                 'role' => 'admin',
+                'telefone' => '+244 911 000 000',
             ]
         );
+
+        User::query()->firstOrCreate(
+            ['email' => 'motorista@elisal.ep'],
+            [
+                'nome' => 'Motorista Demo',
+                'password' => bcrypt('password'),
+                'role' => 'motorista',
+                'telefone' => '+244 922 000 000',
+            ]
+        );
+
+        $motoristaUser = User::query()->where('email', 'motorista@elisal.ep')->first();
+
+        if ($motoristaUser) {
+            Motorista::query()->firstOrCreate(
+                ['utilizador_id' => $motoristaUser->id],
+                ['numero_carta' => 'MOT-0001']
+            );
+        }
 
         User::query()->firstOrCreate(
             ['email' => 'cliente@elisal.ep'],

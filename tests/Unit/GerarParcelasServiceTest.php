@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Jobs\GerarParcelasContrato;
 use App\Models\Contrato;
 use App\Models\ContratoDiaSemana;
 use App\Models\Distrito;
@@ -10,11 +9,12 @@ use App\Models\Municipio;
 use App\Models\Provincia;
 use App\Models\TipoResiduo;
 use App\Models\User;
+use App\Services\GerarParcelasService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class GerarParcelasContratoTest extends TestCase
+class GerarParcelasServiceTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -36,7 +36,7 @@ class GerarParcelasContratoTest extends TestCase
     {
         $contrato = $this->makeContrato(duracaoMeses: 3, valorMensal: 20000.00);
 
-        (new GerarParcelasContrato($contrato))->handle();
+        app(GerarParcelasService::class)->gerar($contrato);
 
         $this->assertDatabaseCount('parcelas_mensalidades', 3);
 
@@ -56,9 +56,10 @@ class GerarParcelasContratoTest extends TestCase
     public function test_nao_duplica_parcelas_quando_ja_existem(): void
     {
         $contrato = $this->makeContrato(duracaoMeses: 2, valorMensal: 10000.00);
+        $service = app(GerarParcelasService::class);
 
-        (new GerarParcelasContrato($contrato))->handle();
-        (new GerarParcelasContrato($contrato))->handle();
+        $service->gerar($contrato);
+        $service->gerar($contrato);
 
         $this->assertDatabaseCount('parcelas_mensalidades', 2);
     }

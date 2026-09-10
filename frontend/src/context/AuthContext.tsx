@@ -9,13 +9,14 @@ import {
 import type { ReactNode } from 'react'
 import { authApi } from '../api/auth'
 import { getStoredToken, setAuthToken, TOKEN_KEY, USER_KEY } from '../api/client'
-import type { User } from '../types'
+import type { RegistoInput, User } from '../types'
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: User | null
   token: string | null
   initializing: boolean
   login: (email: string, password: string) => Promise<void>
+  registar: (input: RegistoInput) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -52,6 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user)
   }, [])
 
+  const registar = useCallback(async (input: RegistoInput) => {
+    const res = await authApi.registar(input)
+    window.localStorage.setItem(TOKEN_KEY, res.token)
+    window.localStorage.setItem(USER_KEY, JSON.stringify(res.user))
+    setAuthToken(res.token)
+    setToken(res.token)
+    setUser(res.user)
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout()
@@ -66,8 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, token, initializing, login, logout }),
-    [user, token, initializing, login, logout],
+    () => ({ user, token, initializing, login, registar, logout }),
+    [user, token, initializing, login, registar, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
