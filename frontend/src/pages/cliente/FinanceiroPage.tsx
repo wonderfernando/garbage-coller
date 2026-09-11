@@ -30,7 +30,7 @@ export default function FinanceiroPage() {
   }, [load])
 
   const emAberto = parcelas.filter((p) => p.estado === 'pendente')
-  const totalAberto = emAberto.reduce((acc, p) => acc + p.valor, 0)
+  const totalAberto = emAberto.reduce((acc, p) => acc + Number(p.valor), 0)
 
   return (
     <div>

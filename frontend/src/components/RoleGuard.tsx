@@ -9,6 +9,8 @@ export function roleHomePath(role: Role | null | undefined): string {
       return '/cliente'
     case 'motorista':
       return '/motorista'
+    case 'admin':
+      return '/dashboard'
     default:
       return '/'
   }

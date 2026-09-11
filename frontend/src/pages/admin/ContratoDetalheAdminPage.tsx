@@ -24,9 +24,10 @@ import {
   TablePagination,
   TableRow,
   Tabs,
+  TextField,
   Typography,
 } from '@mui/material'
-import { ArrowBack, Check, Close, Receipt } from '@mui/icons-material'
+import { ArrowBack, Block, Check, Close, Event, Receipt } from '@mui/icons-material'
 import { contratosApi } from '../../api/contratos'
 import { administracaoApi } from '../../api/administracao'
 import { readApiError } from '../../api/client'
@@ -53,6 +54,10 @@ export default function ContratoDetalheAdminPage() {
   const [aDescarregarReciboId, setADescarregarReciboId] = useState<number | null>(null)
   const [motoristas, setMotoristas] = useState<Motorista[]>([])
   const [atribuindoId, setAtribuindoId] = useState<number | null>(null)
+  const [anularOpen, setAnularOpen] = useState(false)
+  const [motivoAnular, setMotivoAnular] = useState('')
+  const [reagendarAgendamentoId, setReagendarAgendamentoId] = useState<number | null>(null)
+  const [novaDataRecolha, setNovaDataRecolha] = useState('')
 
   const load = useCallback(async () => {
     if (!id) return
@@ -149,6 +154,40 @@ export default function ContratoDetalheAdminPage() {
     }
   }
 
+  const confirmarAnular = async () => {
+    if (!contrato) return
+    setBusy(true)
+    setActionError(null)
+    setActionSuccess(null)
+    try {
+      await contratosApi.anularContrato(contrato.id, motivoAnular.trim() || undefined)
+      setActionSuccess('Contrato anulado com sucesso.')
+      setAnularOpen(false)
+      setMotivoAnular('')
+      await load()
+    } catch (err) {
+      setActionError(readApiError(err))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const agendamentoAReagendar = contrato?.agendamentos?.find((a) => a.id === reagendarAgendamentoId) ?? null
+
+  const confirmarReagendar = async () => {
+    if (reagendarAgendamentoId === null) return
+    setActionError(null)
+    setActionSuccess(null)
+    try {
+      await contratosApi.reagendarAgendamento(reagendarAgendamentoId, novaDataRecolha)
+      setActionSuccess('Recolha reagendada com sucesso.')
+      setReagendarAgendamentoId(null)
+      await load()
+    } catch (err) {
+      setActionError(readApiError(err))
+    }
+  }
+
   return (
     <Box>
       <PageHeader
@@ -237,19 +276,19 @@ export default function ContratoDetalheAdminPage() {
                 </Grid>
               </Grid>
 
-              {contrato.estado === 'pendente' && (
-                <>
-                  {actionError && (
-                    <Alert severity="error" sx={{ mt: 2 }}>
-                      {actionError}
-                    </Alert>
-                  )}
-                  {actionSuccess && (
-                    <Alert severity="success" sx={{ mt: 2 }}>
-                      {actionSuccess}
-                    </Alert>
-                  )}
-                  <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+              {actionError && (
+                <Alert severity="error" sx={{ mt: 2 }}>
+                  {actionError}
+                </Alert>
+              )}
+              {actionSuccess && (
+                <Alert severity="success" sx={{ mt: 2 }}>
+                  {actionSuccess}
+                </Alert>
+              )}
+              {(contrato.estado === 'pendente' || contrato.estado === 'aprovado') && (
+                <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
+                  {contrato.estado === 'pendente' && (
                     <Button
                       variant="contained"
                       color="success"
@@ -259,17 +298,31 @@ export default function ContratoDetalheAdminPage() {
                     >
                       Aprovar
                     </Button>
+                  )}
+                  {contrato.estado === 'pendente' && (
                     <Button
                       variant="outlined"
-                      color="error"
+                      color="warning"
                       startIcon={<Close />}
                       disabled={busy}
                       onClick={() => void runAction('rejeitar')}
                     >
                       Rejeitar
                     </Button>
-                  </Stack>
-                </>
+                  )}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<Block />}
+                    disabled={busy}
+                    onClick={() => {
+                      setMotivoAnular('')
+                      setAnularOpen(true)
+                    }}
+                  >
+                    Anular contrato
+                  </Button>
+                </Stack>
               )}
             </Card>
           )}
@@ -368,6 +421,16 @@ export default function ContratoDetalheAdminPage() {
               <Box sx={{ p: 2.5 }}>
                 <Typography variant="h6">Agendamentos</Typography>
               </Box>
+              {actionError && (
+                <Alert severity="error" sx={{ mx: 2.5, mb: 2 }}>
+                  {actionError}
+                </Alert>
+              )}
+              {actionSuccess && (
+                <Alert severity="success" sx={{ mx: 2.5, mb: 2 }}>
+                  {actionSuccess}
+                </Alert>
+              )}
               {!contrato.agendamentos || contrato.agendamentos.length === 0 ? (
                 <EmptyState message="Sem recolhas agendadas." />
               ) : (
@@ -379,6 +442,7 @@ export default function ContratoDetalheAdminPage() {
                         <TableCell>Motorista</TableCell>
                         <TableCell>Estado</TableCell>
                         <TableCell>Observação</TableCell>
+                        <TableCell align="right">Ações</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -386,7 +450,14 @@ export default function ContratoDetalheAdminPage() {
                         .slice(agendamentoPage * 10, agendamentoPage * 10 + 10)
                         .map((a) => (
                           <TableRow key={a.id}>
-                            <TableCell>{formatData(a.data_recolha)}</TableCell>
+                            <TableCell>
+                              {formatData(a.data_recolha)}
+                              {a.data_recolha_anterior && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                  Ajustado de {formatData(a.data_recolha_anterior)}
+                                </Typography>
+                              )}
+                            </TableCell>
                             <TableCell>
                               {a.estado === 'pendente' ? (
                                 <Select
@@ -415,6 +486,24 @@ export default function ContratoDetalheAdminPage() {
                               <Chip size="small" label={AGENDAMENTO_ESTADO[a.estado].label} color={AGENDAMENTO_ESTADO[a.estado].color} />
                             </TableCell>
                             <TableCell>{a.observacao ?? '—'}</TableCell>
+                            <TableCell align="right">
+                              {a.estado === 'pendente' ? (
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  startIcon={<Event />}
+                                  disabled={reagendarAgendamentoId !== null}
+                                  onClick={() => {
+                                    setNovaDataRecolha(a.data_recolha.slice(0, 16))
+                                    setReagendarAgendamentoId(a.id)
+                                  }}
+                                >
+                                  Reagendar
+                                </Button>
+                              ) : (
+                                '—'
+                              )}
+                            </TableCell>
                           </TableRow>
                         ))}
                     </TableBody>
@@ -467,6 +556,78 @@ export default function ContratoDetalheAdminPage() {
             disabled={liquidandoId !== null}
           >
             Liquidar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={anularOpen} onClose={() => setAnularOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Anular contrato #{contrato?.id ?? '—'}?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Esta ação elimina o contrato e cancela <strong>todas as recolhas pendentes</strong> e{' '}
+            <strong>mensalidades em aberto</strong>. As mensalidades já pagas e o histórico são mantidos.
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Motivo (opcional)"
+            placeholder="Ex.: cliente desistiu do serviço"
+            value={motivoAnular}
+            onChange={(e) => setMotivoAnular(e.target.value)}
+            sx={{ mt: 2 }}
+            multiline
+            minRows={2}
+            maxRows={4}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setAnularOpen(false)} variant="outlined" disabled={busy}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void confirmarAnular()}
+            variant="contained"
+            color="error"
+            startIcon={<Block />}
+            disabled={busy}
+          >
+            Anular contrato
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={reagendarAgendamentoId !== null} onClose={() => setReagendarAgendamentoId(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reagendar recolha</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            Recolha atual: <strong>{formatData(agendamentoAReagendar?.data_recolha ?? '')}</strong>
+            {agendamentoAReagendar?.motorista?.utilizador?.nome &&
+              ` · Motorista: ${agendamentoAReagendar.motorista.utilizador.nome}`}
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Nova data e hora"
+            type="datetime-local"
+            value={novaDataRecolha}
+            onChange={(e) => setNovaDataRecolha(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            A nova data deve ser futura, num dia com recolha disponível para o distrito do contrato.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, pt: 0 }}>
+          <Button onClick={() => setReagendarAgendamentoId(null)} variant="outlined">
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void confirmarReagendar()}
+            variant="contained"
+            startIcon={<Event />}
+            disabled={!novaDataRecolha}
+          >
+            Reagendar
           </Button>
         </DialogActions>
       </Dialog>

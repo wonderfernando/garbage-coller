@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['contrato_id', 'motorista_id', 'data_recolha', 'estado', 'observacao'])]
+#[Fillable(['contrato_id', 'motorista_id', 'data_recolha', 'data_recolha_anterior', 'reagendado_por_id', 'estado', 'observacao'])]
 class AgendamentoRecolha extends Model
 {
     protected $table = 'agendamentos_recolha';
+
+    public static $snakeAttributes = false;
 
     public function contrato(): BelongsTo
     {
@@ -19,5 +21,10 @@ class AgendamentoRecolha extends Model
     public function motorista(): BelongsTo
     {
         return $this->belongsTo(Motorista::class, 'motorista_id');
+    }
+
+    public function reagendadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reagendado_por_id');
     }
 }

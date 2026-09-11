@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\ContratoClienteController;
 use App\Http\Controllers\Api\DashboardAdminController;
 use App\Http\Controllers\Api\DisponibilidadeDistritoController;
 use App\Http\Controllers\Api\GeografiaController;
+use App\Http\Controllers\Api\MarcaVeiculoController;
+use App\Http\Controllers\Api\MotoristaController;
 use App\Http\Controllers\Api\ParcelaAdminController;
 use App\Http\Controllers\Api\ReferenciaPublicaController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +36,12 @@ Route::middleware(['auth:sanctum', 'role:cliente'])->group(function () {
     Route::get('/meus/agendamentos', [ContratoClienteController::class, 'agendamentos']);
 });
 
+Route::middleware(['auth:sanctum', 'role:motorista'])->group(function () {
+    Route::get('/motorista/cronograma', [MotoristaController::class, 'cronograma']);
+    Route::patch('/motorista/agendamentos/{agendamento}/concluir', [MotoristaController::class, 'concluir']);
+    Route::patch('/motorista/agendamentos/{agendamento}/cancelar', [MotoristaController::class, 'cancelar']);
+});
+
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/administracao/dashboard', [DashboardAdminController::class, 'index']);
 
@@ -51,9 +59,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::patch('/contratos/{contrato}/aprovar', [ContratoAdminController::class, 'aprovar']);
     Route::patch('/contratos/{contrato}/rejeitar', [ContratoAdminController::class, 'rejeitar']);
 
+    Route::patch('/administracao/contratos/{contrato}/anular', [ContratoAdminController::class, 'anular']);
     Route::patch('/administracao/parcelas/{parcela}/liquidar', [ParcelaAdminController::class, 'liquidar']);
     Route::get('/administracao/parcelas/{parcela}/recibo', [ParcelaAdminController::class, 'recibo']);
     Route::patch('/administracao/agendamentos/{agendamento}/motorista', [AgendamentoAdminController::class, 'atribuirMotorista']);
+    Route::patch('/administracao/agendamentos/{agendamento}/reagendar', [AgendamentoAdminController::class, 'reagendar']);
+    Route::get('/administracao/agendamentos', [AgendamentoAdminController::class, 'index']);
 
     Route::get('/administracao/motoristas', [AdminMotoristaController::class, 'index']);
 
@@ -73,4 +84,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/administracao/veiculos/{veiculo}', [AdminVeiculoController::class, 'show']);
     Route::patch('/administracao/veiculos/{veiculo}', [AdminVeiculoController::class, 'update']);
     Route::delete('/administracao/veiculos/{veiculo}', [AdminVeiculoController::class, 'destroy']);
+
+    Route::get('/administracao/marcas-veiculos', [MarcaVeiculoController::class, 'index']);
+    Route::post('/administracao/marcas-veiculos', [MarcaVeiculoController::class, 'store']);
 });

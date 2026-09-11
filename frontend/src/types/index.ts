@@ -115,9 +115,16 @@ export interface Motorista {
   utilizador?: User
 }
 
+export interface MarcaVeiculo {
+  id: number
+  nome: string
+}
+
 export interface Veiculo {
   id: number
   matricula: string
+  marca_id?: number | null
+  marca?: MarcaVeiculo
   modelo?: string | null
   motorista_id?: number | null
   motorista?: Motorista
@@ -129,7 +136,7 @@ export interface ParcelaMensalidade {
   numero_parcela: number
   valor: number
   data_vencimento: string
-  estado: 'pendente' | 'pago'
+  estado: 'pendente' | 'pago' | 'cancelado'
   data_pagamento?: string | null
   numero_recibo?: string | null
   contrato?: Contrato | null
@@ -141,10 +148,12 @@ export interface AgendamentoRecolha {
   contrato_id: number
   motorista_id?: number | null
   data_recolha: string
+  data_recolha_anterior?: string | null
   estado: 'pendente' | 'concluido' | 'cancelado'
   observacao?: string | null
   contrato?: Contrato | null
   motorista?: Motorista | null
+  reagendadoPor?: User | null
 }
 
 export interface ApiError {
@@ -179,12 +188,14 @@ export function nomeDiaSemana(dia: number): string {
   return DIAS_SEMANA.find((d) => d.value === dia)?.label ?? `Dia ${dia}`
 }
 
-export function formatMoeda(valor: number): string {
+export function formatMoeda(valor: number | string | null | undefined): string {
+  const n = Number(valor)
+  if (!Number.isFinite(n)) return '—'
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
     currency: 'AOA',
     maximumFractionDigits: 0,
-  }).format(valor)
+  }).format(n)
 }
 
 export function formatData(data?: string | null): string {

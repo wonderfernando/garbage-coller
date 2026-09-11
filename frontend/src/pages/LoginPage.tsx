@@ -1,61 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material'
-import { useAuth } from '../context/AuthContext'
-import { readApiError } from '../api/client'
-import { roleHomePath } from '../components/RoleGuard'
-
-const loginSchema = z.object({
-  email: z.string().min(1, 'Informe o email.').email('Email inválido.'),
-  password: z.string().min(1, 'Informe a palavra-passe.'),
-})
-
-type LoginForm = z.infer<typeof loginSchema>
+import { Link } from 'react-router-dom'
+import { Box, Button, Card, CardActionArea, Chip, Paper, Stack, Typography } from '@mui/material'
+import PersonIcon from '@mui/icons-material/Person'
+import BadgeIcon from '@mui/icons-material/Badge'
 
 export default function LoginPage() {
-  const { login, user } = useAuth()
-  const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
-  })
-
-  const onSubmit = async (values: LoginForm) => {
-    setSubmitting(true)
-    setError(null)
-    try {
-      await login(values.email, values.password)
-    } catch (err) {
-      setError(readApiError(err))
-      setSubmitting(false)
-    }
-  }
-
-  useEffect(() => {
-    if (user) {
-      navigate(roleHomePath(user.role), { replace: true })
-    }
-  }, [user, navigate])
-
   return (
     <Box
       sx={{
@@ -64,80 +12,68 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
-       }}
+        bgcolor: '#f0faf4',
+      }}
     >
-      <Paper
-         elevation={2}
-        sx={{ width: '100%', maxWidth: 420, p: { xs: 3, sm: 4 }, borderRadius: 0.5,  }}
-      >
-        <Stack spacing={1} sx={{ alignItems: 'center', mb: 6 }}>
-          <Box
-            sx={{
-              borderRadius: 2,
-               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <img width={100} src="./logo.png" className="w-4 h-4" />
-            </Box>
-          <Typography sx={{
-            width: '100%',
-            textAlign: 'center',
-            fontWeight: 600,
-          }} variant="h5" component="h1">
-            ELISAL-EP
+      <Paper elevation={2} sx={{ width: '100%', maxWidth: 520, p: { xs: 3, sm: 4 }, borderRadius: 0.5 }}>
+        <Stack spacing={1} sx={{ alignItems: 'center', mb: 4 }}>
+          <img width={110} src="/logo.png" alt="ELISAL-EP" />
+          <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
+            Iniciar sessão
           </Typography>
-          <Typography variant="body2" align='center' color="textDisabled">
-            Insira as suas credencias pra iniciar a sessão
+          <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center' }}>
+            Selecione o seu perfil para continuar.
           </Typography>
         </Stack>
 
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <Stack spacing={2}>
-            {error && <Alert severity="error">{error}</Alert>}
+        <Stack spacing={2}>
+          <Card elevation={0}>
+            <CardActionArea component={Link} to="/login/cliente" sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <Box sx={{ bgcolor: '#e2f2e9', borderRadius: 2, p: 1.5, display: 'flex' }}>
+                  <PersonIcon sx={{ color: '#0b4a2e', fontSize: 32 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                      Cliente
+                    </Typography>
+                    <Chip size="small" label="Recomendado" color="success" />
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    Acompanhe os seus contratos, recolhas e pagamentos.
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardActionArea>
+          </Card>
 
-            <TextField
-              label="Email"
-              type="email"
-              autoComplete="email"
-              fullWidth
-              {...register('email')}
-              error={Boolean(errors.email)}
-              helperText={errors.email?.message}
-            />
+          <Card elevation={0}>
+            <CardActionArea component={Link} to="/login/funcionario" sx={{ p: 2.5 }}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+                <Box sx={{ bgcolor: '#e2f2e9', borderRadius: 2, p: 1.5, display: 'flex' }}>
+                  <BadgeIcon sx={{ color: '#0b4a2e', fontSize: 32 }} />
+                </Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    Funcionário ELISAL
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Administradores e motoristas.
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardActionArea>
+          </Card>
+        </Stack>
 
-            <TextField
-              label="Palavra-passe"
-              type="password"
-              autoComplete="current-password"
-              fullWidth
-              {...register('password')}
-              error={Boolean(errors.password)}
-              helperText={errors.password?.message}
-            />
-
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={submitting}
-              startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : null}
-            >
-              Entrar
-            </Button>
-          </Stack>
-
-          <Stack sx={{ mt: 3, alignItems: 'center', flexDirection: 'row', gap: 0.5, justifyContent: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Ainda não tem conta?
-            </Typography>
-            <Link to="/registar" style={{ textDecoration: 'none' }}>
-              <Typography variant="body2" sx={{ fontWeight: 600, color: '#0b4a2e' }}>
-                Criar conta
-              </Typography>
-            </Link>
-          </Stack>
+        <Box sx={{ textAlign: 'center', mt: 4 }}>
+          <Typography variant="body2" color="text.secondary">
+            Ainda não tem conta?
+          </Typography>
+          <Button component={Link} to="/registar" variant="outlined" fullWidth sx={{ mt: 1.5 }}>
+            Criar conta de cliente
+          </Button>
         </Box>
       </Paper>
     </Box>

@@ -21,6 +21,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Tabs,
   TextField,
@@ -97,6 +98,8 @@ export default function ClientePerfilPage() {
   const [motivo, setMotivo] = useState('')
   const [blocking, setBlocking] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [contratoPage, setContratoPage] = useState(0)
+  const [agendamentoPage, setAgendamentoPage] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -293,8 +296,15 @@ export default function ClientePerfilPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {contratos.map((c) => (
-                    <TableRow key={c.id} hover>
+                  {contratos
+                    .slice(contratoPage * 10, contratoPage * 10 + 10)
+                    .map((c) => (
+                    <TableRow
+                      key={c.id}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => navigate(`/contratos/${c.id}`)}
+                    >
                       <TableCell>{c.distrito?.nome ?? `#${c.distrito_id}`}</TableCell>
                       <TableCell>{c.tipoResiduo?.nome ?? '—'}</TableCell>
                       <TableCell align="right">{formatMoeda(c.valor_mensal)}</TableCell>
@@ -313,6 +323,14 @@ export default function ClientePerfilPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                component="div"
+                count={contratos.length}
+                rowsPerPage={10}
+                rowsPerPageOptions={[10]}
+                page={contratoPage}
+                onPageChange={(_e, page) => setContratoPage(page)}
+              />
             </TableContainer>
           )}
         </Card>
@@ -336,7 +354,9 @@ export default function ClientePerfilPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {agendamentos.map((a) => (
+                  {agendamentos
+                    .slice(agendamentoPage * 10, agendamentoPage * 10 + 10)
+                    .map((a) => (
                     <TableRow key={a.id} hover>
                       <TableCell>{formatDataHora(a.data_recolha)}</TableCell>
                       <TableCell>{a.contrato?.distrito?.nome ?? `#${a.contrato_id}`}</TableCell>
@@ -350,6 +370,14 @@ export default function ClientePerfilPage() {
                   ))}
                 </TableBody>
               </Table>
+              <TablePagination
+                component="div"
+                count={agendamentos.length}
+                rowsPerPage={10}
+                rowsPerPageOptions={[10]}
+                page={agendamentoPage}
+                onPageChange={(_e, page) => setAgendamentoPage(page)}
+              />
             </TableContainer>
           )}
         </Card>

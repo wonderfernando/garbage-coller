@@ -4,6 +4,7 @@ import type {
   Contrato,
   DashboardData,
   Distrito,
+  MarcaVeiculo,
   Motorista,
   Provincia,
   TipoResiduo,
@@ -22,6 +23,7 @@ export interface CreateUserInput {
 
 export interface CreateVeiculoInput {
   matricula: string
+  marca_id?: number | null
   modelo?: string
   motorista_id?: number | null
 }
@@ -76,6 +78,13 @@ export const administracaoApi = {
     return data
   },
 
+  async listarAgendamentos(inicio?: string, fim?: string): Promise<AgendamentoRecolha[]> {
+    const { data } = await api.get<AgendamentoRecolha[]>('/administracao/agendamentos', {
+      params: inicio && fim ? { inicio, fim } : {},
+    })
+    return data
+  },
+
   async bloquearCliente(id: number, motivo: string): Promise<{ message: string; user: User }> {
     const { data } = await api.post(`/administracao/clientes/${id}/bloquear`, { motivo })
     return data
@@ -127,6 +136,16 @@ export const administracaoApi = {
 
   async eliminarVeiculo(id: number): Promise<void> {
     await api.delete(`/administracao/veiculos/${id}`)
+  },
+
+  async listarMarcasVeiculo(): Promise<MarcaVeiculo[]> {
+    const { data } = await api.get<MarcaVeiculo[]>('/administracao/marcas-veiculos')
+    return data
+  },
+
+  async criarMarcaVeiculo(nome: string): Promise<MarcaVeiculo> {
+    const { data } = await api.post<MarcaVeiculo>('/administracao/marcas-veiculos', { nome })
+    return data
   },
 
   async adicionarDisponibilidade(distritoId: number, diaSemana: number): Promise<unknown> {

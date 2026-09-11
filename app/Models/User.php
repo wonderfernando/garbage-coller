@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -24,6 +25,11 @@ class User extends Authenticatable
     public function contratos(): HasMany
     {
         return $this->hasMany(Contrato::class, 'cliente_id');
+    }
+
+    public function motorista(): HasOne
+    {
+        return $this->hasOne(Motorista::class, 'utilizador_id');
     }
 
     /**

@@ -61,10 +61,10 @@ O monorepo `elisal-sistema/` com `backend/` + `frontend/` e o `backlog_elisal.md
 | `tipos_residuos` | — | `preco_unitario_recolha`, `taxa_adesao` |
 | `contratos` | `cliente_id`, `distrito_id`, `tipo_residuo_id` | `estado`: pendente, aprovado, rejeitado, cancelado; `frequencia_semanal`, `rua`, `ponto_referencia` |
 | `contrato_dias_semana` | `contrato_id` | `dia_semana` (1-7), unicidade contrato+dia |
-| `parcelas_mensalidades` | `contrato_id`, `registado_por_id` | `estado`: pendente, pago; `numero_recibo` |
+| `parcelas_mensalidades` | `contrato_id`, `registado_por_id` | `estado`: pendente, pago, cancelado; `numero_recibo` |
 | `motoristas` | `utilizador_id` | sem `veiculo_matricula` (matrícula em `veiculos`) |
 | `veiculos` | `motorista_id` (nullable) | `matricula` única, `modelo` opcional |
-| `agendamentos_recolha` | `contrato_id`, `motorista_id` (nullable) | `estado`: pendente, concluido, cancelado; `observacao` obrigatória em cancelado |
+| `agendamentos_recolha` | `contrato_id`, `motorista_id` (nullable), `reagendado_por_id` (nullable) | `estado`: pendente, concluido, cancelado; `observacao` obrigatória em cancelado; `data_recolha_anterior` regista o último reagendamento |
 
 ## Regras de negócio críticas
 
@@ -88,6 +88,17 @@ Só admin. `ParcelaLiquidacaoService` (em transação): valida `estado = pendent
 `data_pagamento`, `numero_recibo` (se não enviado, gerado `REC-{contrato:pad4}-{parcela}`) e
 `registado_por_id` do admin.
 
+### Anular contrato (`PATCH /administracao/contratos/{contrato}/anular`)
+Só admin, sobre contratos `pendente` ou `aprovado`. `AnularContratoService` (em transação): muda o
+contrato para `cancelado`, passa todas as recolhas `pendente` a `cancelado` (com `observacao` = motivo
+opcional enviado ou "Contrato cancelado") e todas as parcelas em aberto a `cancelado`. Parcelas pagas
+e recolhas concluídas/canceladas mantêm-se intactas (histórico).
+
+### Reagendar recolha (`PATCH /administracao/agendamentos/{agendamento}/reagendar`)
+Só admin, sobre recolhas `pendente`. `ReagendarAgendamentoService`: nova `data_recolha` tem de ser
+futura, num dia com recolha disponível para o distrito (`disponibilidade_distrito`) e sem colisão com
+outra recolha pendente do mesmo motorista. Grava histórico: `data_recolha_anterior` + `reagendado_por_id`.
+
 ### Atribuição de motorista
 Feita pelo Administrador, por zona/distrito, sobre agendamentos já gerados (não na abertura do contrato).
 `AtribuirMotoristaService` + `PATCH /administracao/agendamentos/{agendamento}/motorista` (só recolhas
@@ -104,7 +115,7 @@ Feita pelo Administrador, por zona/distrito, sobre agendamentos já gerados (nã
 - [ ] Fase 4 — Módulo cliente (contratos)
 - [ ] Fase 5 — Aprovação, parcelas e agendamento automático
 - [~] Fase 6 — Faturação e liquidação: `ParcelaLiquidacaoService` + `PATCH /administracao/parcelas/{parcela}/liquidar` (transação, `numero_recibo` auto ou manual, `registado_por_id`); recibo PDF `GET /administracao/parcelas/{parcela}/recibo` via `barryvdh/laravel-dompdf` (Blade `recibos.parcela`); botão Liquidar com modal de confirmação e download do Recibo no detalhe do contrato (admin)
-- [ ] Fase 7 — Módulo motorista
+- [x] Fase 7 — Módulo motorista: área própria `/motorista` com `GET /motorista/cronograma` (diário/semanal via `inicio`/`fim`, default hoje, isolamento por `motorista_id`), `PATCH /motorista/agendamentos/{agendamento}/concluir` e `.../cancelar` (`observacao` obrigatória no cancelamento); relação `User::motorista()`; serviços `MotoristaCronogramaService`, `ConcluirRecolhaService`, `CancelarRecolhaService`; frontend `MotoristaLayout`, `DashboardPage` (`/motorista`) e `CronogramaPage` (`/motorista/cronograma`), `src/api/motorista.ts`
 - [ ] Fase 8 — Mapa e acompanhamento
 - [ ] Fase 9 — Polimento e entrega da tese
 

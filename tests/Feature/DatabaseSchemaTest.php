@@ -24,6 +24,7 @@ class DatabaseSchemaTest extends TestCase
             'parcelas_mensalidades',
             'motoristas',
             'veiculos',
+            'marcas_veiculos',
             'agendamentos_recolha',
         ];
 
@@ -69,7 +70,8 @@ class DatabaseSchemaTest extends TestCase
                 'numero_recibo',
             ],
             'motoristas' => ['utilizador_id', 'numero_carta'],
-            'veiculos' => ['matricula', 'modelo', 'motorista_id'],
+            'veiculos' => ['matricula', 'marca_id', 'modelo', 'motorista_id'],
+            'marcas_veiculos' => ['nome'],
             'agendamentos_recolha' => ['contrato_id', 'motorista_id', 'data_recolha', 'estado', 'observacao'],
         ];
 

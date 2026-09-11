@@ -27,13 +27,17 @@ import { administracaoApi } from '../../api/administracao'
 import { readApiError } from '../../api/client'
 import PageHeader from '../../components/PageHeader'
 import { EmptyState, LoadingState } from '../../components/StateView'
-import type { Motorista, Veiculo } from '../../types'
+import type { MarcaVeiculo, Motorista, Veiculo } from '../../types'
 
 const schema = z.object({
   matricula: z.string().min(1, 'Informe a matrícula.'),
+  marca_id: z.union([z.number().int(), z.undefined()]),
   modelo: z.string().optional(),
   motorista_id: z.union([z.number(), z.undefined()]),
 })
+
+const SEM_MOTORISTA = ''
+const SEM_MARCA = ''
 
 type FormValues = z.infer<typeof schema>
 
@@ -42,28 +46,33 @@ interface FormState {
   editing?: Veiculo
 }
 
-const SEM_MOTORISTA = ''
-
 export default function VeiculosPage() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([])
   const [motoristas, setMotoristas] = useState<Motorista[]>([])
+  const [marcas, setMarcas] = useState<MarcaVeiculo[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [form, setForm] = useState<FormState>({ open: false })
   const [confirmDelete, setConfirmDelete] = useState<Veiculo | null>(null)
+  const [marcaOpen, setMarcaOpen] = useState(false)
+  const [novaMarca, setNovaMarca] = useState('')
+  const [criandoMarca, setCriandoMarca] = useState(false)
+  const [marcaError, setMarcaError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [v, m] = await Promise.all([
+      const [v, m, mt] = await Promise.all([
         administracaoApi.listarVeiculos(),
         administracaoApi.listarMotoristas(),
+        administracaoApi.listarMarcasVeiculo(),
       ])
       setVeiculos(v)
       setMotoristas(m)
+      setMarcas(mt)
     } catch (err) {
       setError(readApiError(err))
     } finally {
@@ -80,26 +89,38 @@ export default function VeiculosPage() {
     handleSubmit,
     reset,
     setValue,
+    setError: setFieldError,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const openCreate = () => {
     setFormError(null)
-    reset({ matricula: '', modelo: '', motorista_id: undefined })
+    reset({ matricula: '', marca_id: undefined, modelo: '', motorista_id: undefined })
     setForm({ open: true })
   }
 
   const openEdit = (v: Veiculo) => {
     setFormError(null)
-    reset({ matricula: v.matricula, modelo: v.modelo ?? '', motorista_id: v.motorista_id ?? undefined })
+    reset({
+      matricula: v.matricula,
+      marca_id: v.marca_id ?? undefined,
+      modelo: v.modelo ?? '',
+      motorista_id: v.motorista_id ?? undefined,
+    })
     setForm({ open: true, editing: v })
   }
 
   const onSubmit = async (values: FormValues) => {
+    if (!values.marca_id) {
+      setFieldError('marca_id', { type: 'manual', message: 'Selecione a marca.' })
+      return
+    }
     setSubmitting(true)
     setFormError(null)
     const payload = {
       matricula: values.matricula,
+      marca_id: values.marca_id,
       modelo: values.modelo || undefined,
       motorista_id: values.motorista_id ?? null,
     }
@@ -115,6 +136,22 @@ export default function VeiculosPage() {
       setFormError(readApiError(err))
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const criarMarca = async () => {
+    setCriandoMarca(true)
+    setMarcaError(null)
+    try {
+      const m = await administracaoApi.criarMarcaVeiculo(novaMarca.trim())
+      setMarcas((prev) => [...prev, m].sort((a, b) => a.nome.localeCompare(b.nome)))
+      setValue('marca_id', m.id)
+      setMarcaOpen(false)
+      setNovaMarca('')
+    } catch (err) {
+      setMarcaError(readApiError(err))
+    } finally {
+      setCriandoMarca(false)
     }
   }
 
@@ -164,6 +201,7 @@ export default function VeiculosPage() {
               <TableHead>
                 <TableRow>
                   <TableCell>Matrícula</TableCell>
+                  <TableCell>Marca</TableCell>
                   <TableCell>Modelo</TableCell>
                   <TableCell>Motorista</TableCell>
                   <TableCell align="right">Ações</TableCell>
@@ -177,6 +215,7 @@ export default function VeiculosPage() {
                         {v.matricula}
                       </Typography>
                     </TableCell>
+                    <TableCell>{v.marca?.nome ?? '—'}</TableCell>
                     <TableCell>{v.modelo || '—'}</TableCell>
                     <TableCell>{motoristaNome(v) || '—'}</TableCell>
                     <TableCell align="right">
@@ -220,6 +259,40 @@ export default function VeiculosPage() {
                 error={Boolean(errors.matricula)}
                 helperText={errors.matricula?.message}
               />
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                <TextField
+                  select
+                  label="Marca"
+                  fullWidth
+                  value={watch('marca_id') ?? SEM_MARCA}
+                  onChange={(e) =>
+                    setValue('marca_id', e.target.value === SEM_MARCA ? undefined : Number(e.target.value), {
+                      shouldValidate: true,
+                    })
+                  }
+                  error={Boolean(errors.marca_id)}
+                  helperText={errors.marca_id?.message}
+                >
+                  <MenuItem value={SEM_MARCA}>Selecione a marca</MenuItem>
+                  {marcas.map((m) => (
+                    <MenuItem key={m.id} value={m.id as never}>
+                      {m.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="outlined"
+                  startIcon={<Add />}
+                  onClick={() => {
+                    setNovaMarca('')
+                    setMarcaError(null)
+                    setMarcaOpen(true)
+                  }}
+                  sx={{ mt: 1 }}
+                >
+                  Nova marca
+                </Button>
+              </Stack>
               <TextField
                 label="Modelo"
                 fullWidth
@@ -231,7 +304,7 @@ export default function VeiculosPage() {
                 select
                 label="Motorista"
                 fullWidth
-                value={form.editing?.motorista_id ?? SEM_MOTORISTA}
+                value={watch('motorista_id') ?? SEM_MOTORISTA}
                 onChange={(e) =>
                   setValue(
                     'motorista_id',
@@ -269,6 +342,35 @@ export default function VeiculosPage() {
           <Button onClick={() => setConfirmDelete(null)}>Cancelar</Button>
           <Button color="error" variant="contained" onClick={() => void onDelete()}>
             Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={marcaOpen} onClose={() => setMarcaOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Nova marca</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            {marcaError && <Alert severity="error">{marcaError}</Alert>}
+            <TextField
+              autoFocus
+              label="Nome da marca"
+              fullWidth
+              value={novaMarca}
+              onChange={(e) => setNovaMarca(e.target.value)}
+              placeholder="Ex.: Volvo"
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setMarcaOpen(false)} disabled={criandoMarca}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            disabled={criandoMarca || novaMarca.trim().length === 0}
+            onClick={() => void criarMarca()}
+          >
+            Criar
           </Button>
         </DialogActions>
       </Dialog>

@@ -18,6 +18,7 @@ import {
 } from '@mui/material'
 import {
   Badge as BadgeIcon,
+  CalendarMonth as CalendarMonthIcon,
   Dashboard as DashboardIcon,
   DirectionsBus as DirectionsBusIcon,
   Logout as LogoutIcon,
@@ -32,13 +33,14 @@ import { useAuth } from '../context/AuthContext'
 import { colors } from '../theme'
 
 const NAV = [
-  { to: '/', label: 'Visão geral', icon: <DashboardIcon />, section: 'Administração' },
+  { to: '/dashboard', label: 'Visão geral', icon: <DashboardIcon />, section: 'Administração' },
   { to: '/tipos-residuos', label: 'Tipos de resíduos', icon: <DeleteSweepIcon />, section: 'Administração' },
   { to: '/veiculos', label: 'Veículos', icon: <DirectionsBusIcon />, section: 'Administração' },
   { to: '/cobertura', label: 'Cobertura', icon: <LocationCityIcon />, section: 'Administração' },
   { to: '/utilizadores', label: 'Utilizadores', icon: <PersonIcon />, section: 'Administração' },
   { to: '/clientes', label: 'Clientes', icon: <AssignmentIcon />, section: 'Clientes' },
   { to: '/contratos', label: 'Contratos', icon: <DescriptionIcon />, section: 'Clientes' },
+  { to: '/agendamentos', label: 'Agendamentos', icon: <CalendarMonthIcon />, section: 'Clientes' },
 ]
 
 const SECTIONS = ['Administração', 'Clientes']
@@ -220,7 +222,7 @@ export default function AdminLayout() {
   )
 
   function isActive(to: string): boolean {
-    if (to === '/') return location.pathname === '/'
+    if (to === '/') return false
     return location.pathname.startsWith(to)
   }
 }

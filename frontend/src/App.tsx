@@ -4,10 +4,15 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { theme } from './theme'
 import AdminLayout from './layouts/AdminLayout'
 import ClientLayout from './layouts/ClientLayout'
+import MotoristaLayout from './layouts/MotoristaLayout'
 import { RequireAuth, RequireRole, roleHomePath } from './components/RoleGuard'
+import LandingPage from './pages/LandingPage'
 import LoginPage from './pages/LoginPage'
+import LoginClientePage from './pages/LoginClientePage'
+import LoginStaffPage from './pages/LoginStaffPage'
 import RegistoPage from './pages/RegistoPage'
 import DashboardPage from './pages/admin/DashboardPage'
+import AgendamentosAdminPage from './pages/admin/AgendamentosPage'
 import ContratosPage from './pages/admin/ContratosPage'
 import ContratoDetalheAdminPage from './pages/admin/ContratoDetalheAdminPage'
 import TiposResiduosPage from './pages/admin/TiposResiduosPage'
@@ -22,10 +27,13 @@ import NovoContratoPage from './pages/cliente/NovoContratoPage'
 import ContratoDetalhePage from './pages/cliente/ContratoDetalhePage'
 import FinanceiroPage from './pages/cliente/FinanceiroPage'
 import AgendamentosPage from './pages/cliente/AgendamentosPage'
+import MotoristaDashboardPage from './pages/motorista/DashboardPage'
+import CronogramaPage from './pages/motorista/CronogramaPage'
 
 function HomeRedirect() {
   const { user } = useAuth()
-  return <Navigate to={roleHomePath(user?.role)} replace />
+  if (!user) return <Navigate to="/" replace />
+  return <Navigate to={roleHomePath(user.role)} replace />
 }
 
 export default function App() {
@@ -35,7 +43,10 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/login/cliente" element={<LoginClientePage />} />
+            <Route path="/login/funcionario" element={<LoginStaffPage />} />
             <Route path="/registar" element={<RegistoPage />} />
 
             <Route
@@ -47,7 +58,7 @@ export default function App() {
                 </RequireAuth>
               }
             >
-              <Route path="/" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/contratos" element={<ContratosPage />} />
               <Route path="/contratos/:id" element={<ContratoDetalheAdminPage />} />
               <Route path="/tipos-residuos" element={<TiposResiduosPage />} />
@@ -56,6 +67,7 @@ export default function App() {
               <Route path="/utilizadores" element={<UtilizadoresPage />} />
               <Route path="/clientes" element={<ClientesPage />} />
               <Route path="/clientes/:id" element={<ClientePerfilPage />} />
+              <Route path="/agendamentos" element={<AgendamentosAdminPage />} />
             </Route>
 
             <Route
@@ -73,6 +85,19 @@ export default function App() {
               <Route path="/cliente/contratos/:id" element={<ContratoDetalhePage />} />
               <Route path="/cliente/financeiro" element={<FinanceiroPage />} />
               <Route path="/cliente/agendamentos" element={<AgendamentosPage />} />
+            </Route>
+
+            <Route
+              element={
+                <RequireAuth>
+                  <RequireRole role="motorista">
+                    <MotoristaLayout />
+                  </RequireRole>
+                </RequireAuth>
+              }
+            >
+              <Route path="/motorista" element={<MotoristaDashboardPage />} />
+              <Route path="/motorista/cronograma" element={<CronogramaPage />} />
             </Route>
 
             <Route path="*" element={<HomeRedirect />} />

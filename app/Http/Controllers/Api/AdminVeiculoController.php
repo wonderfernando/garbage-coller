@@ -15,26 +15,26 @@ class AdminVeiculoController extends Controller
 
     public function index(): JsonResponse
     {
-        return response()->json(Veiculo::with('motorista')->orderBy('matricula')->get());
+        return response()->json(Veiculo::with('motorista', 'marca')->orderBy('matricula')->get());
     }
 
     public function store(Request $request): JsonResponse
     {
         $veiculo = $this->veiculos->store($this->validated($request));
 
-        return response()->json($veiculo->load('motorista'), 201);
+        return response()->json($veiculo->load('motorista', 'marca'), 201);
     }
 
     public function show(Veiculo $veiculo): JsonResponse
     {
-        return response()->json($veiculo->load('motorista'));
+        return response()->json($veiculo->load('motorista', 'marca'));
     }
 
     public function update(Request $request, Veiculo $veiculo): JsonResponse
     {
         $this->veiculos->update($veiculo, $this->validated($request, $veiculo->id));
 
-        return response()->json($veiculo->fresh()->load('motorista'));
+        return response()->json($veiculo->fresh()->load('motorista', 'marca'));
     }
 
     public function destroy(Veiculo $veiculo): JsonResponse
@@ -48,6 +48,7 @@ class AdminVeiculoController extends Controller
     {
         return $request->validate([
             'matricula' => ['required', 'string', 'max:20', Rule::unique('veiculos', 'matricula')->ignore($ignoreId)],
+            'marca_id' => ['nullable', 'integer', 'exists:marcas_veiculos,id'],
             'modelo' => ['nullable', 'string', 'max:100'],
             'motorista_id' => ['nullable', 'integer', 'exists:motoristas,id'],
         ]);

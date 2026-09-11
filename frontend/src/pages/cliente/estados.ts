@@ -16,7 +16,11 @@ export const AGENDAMENTO_ESTADO: Record<
   cancelado: { label: 'Cancelado', color: 'error' },
 }
 
-export const PARCELA_ESTADO: Record<'pendente' | 'pago', { label: string; color: 'warning' | 'success' }> = {
+export const PARCELA_ESTADO: Record<
+  'pendente' | 'pago' | 'cancelado',
+  { label: string; color: 'warning' | 'success' | 'default' }
+> = {
   pendente: { label: 'Pendente', color: 'warning' },
   pago: { label: 'Pago', color: 'success' },
+  cancelado: { label: 'Cancelado', color: 'default' },
 }

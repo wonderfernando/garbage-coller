@@ -98,7 +98,7 @@ export default function DashboardPage() {
   const ativos = data.contratos.filter((c) => c.estado === 'aprovado').length
   const pendentesCt = data.contratos.filter((c) => c.estado === 'pendente').length
   const proximas = data.agendamentos.filter((a) => a.estado === 'pendente')
-  const totalAberto = data.parcelas.filter((p) => p.estado === 'pendente').reduce((acc, p) => acc + p.valor, 0)
+  const totalAberto = data.parcelas.filter((p) => p.estado === 'pendente').reduce((acc, p) => acc + Number(p.valor), 0)
 
   const stats = [
     { to: '/cliente/contratos', title: 'Contratos ativos', desc: 'Aprovados e em vigor', icon: <ReceiptLong />, value: ativos },

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\DisponibilidadeDistrito;
 use App\Models\Distrito;
+use App\Models\MarcaVeiculo;
 use App\Models\Motorista;
 use App\Models\Municipio;
 use App\Models\Provincia;
@@ -21,7 +22,15 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->seedGeografiaLuanda();
+        $this->seedMarcasVeiculo();
         $this->seedUsuarios();
+    }
+
+    protected function seedMarcasVeiculo(): void
+    {
+        foreach (['Toyota', 'Chevrolet', 'Mitsubishi', 'Nissan', 'Hyundai'] as $nome) {
+            MarcaVeiculo::query()->firstOrCreate(['nome' => $nome]);
+        }
     }
 
     protected function seedGeografiaLuanda(): void
